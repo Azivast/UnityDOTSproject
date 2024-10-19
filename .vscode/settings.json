@@ -56,5 +56,9 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "UnityDOTSproject.sln"
+    "dotnet.defaultSolution": "UnityDOTSproject.sln",
+    "cSpell.words": [
+        "Archtype",
+        "Boids"
+    ]
 }
