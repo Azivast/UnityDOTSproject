@@ -1159,7 +1159,7 @@ PrefabInstance:
     - target: {fileID: 8496303623023292910, guid: 4ae0800a7387ceb40b98170ef41e6041,
         type: 3}
       propertyPath: showSpawnRegion
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
