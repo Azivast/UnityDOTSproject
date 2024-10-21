@@ -277,11 +277,11 @@ MonoBehaviour:
   boidSettings:
     MaxSpeed: 3
     SeparationRange: 5
-    SeparationFactor: 1
+    SeparationFactor: 2
     AlignmentRange: 5
-    AlignmentFactor: 1
+    AlignmentFactor: 0.5
     CohesionRange: 5
-    CohesionFactor: 1
+    CohesionFactor: 0.5
   boids: []
 --- !u!4 &590335341
 Transform:
