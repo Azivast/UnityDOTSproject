@@ -14,8 +14,8 @@ public class BoidSimulation : MonoBehaviour
 
 	[Header("Boids Settings")]
 	[SerializeField] private BoidSettings boidSettings = new BoidSettings();
-	
-	private List<Boid> boids;
+
+	[SerializeField] private List<Boid> boids;
 	
 	
 	private void Start()

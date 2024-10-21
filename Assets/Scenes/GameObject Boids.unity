@@ -275,13 +275,14 @@ MonoBehaviour:
   boidPrefab: {fileID: 2993067069777015230, guid: b35f9a99658900f458b38a0f13af1dc6,
     type: 3}
   boidSettings:
-    MaxSpeed: 10
-    SeparationRange: 1
+    MaxSpeed: 3
+    SeparationRange: 5
     SeparationFactor: 1
-    AlignmentRange: 1
+    AlignmentRange: 5
     AlignmentFactor: 1
-    CohesionRange: 1
+    CohesionRange: 5
     CohesionFactor: 1
+  boids: []
 --- !u!4 &590335341
 Transform:
   m_ObjectHideFlags: 0

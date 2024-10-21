@@ -8,7 +8,6 @@ using UnityEngine;
 public class Boid : MonoBehaviour
 {
 	[Header("These variables are updated at runtime \nand are only serialized for visualization")]
-	[SerializeField] private Vector3 position;
 	public Vector3 Velocity;
 	[SerializeField] private Vector3 seperationVelocity;
 	[SerializeField] private Vector3 alignmentVelocity;
@@ -85,10 +84,10 @@ public class Boid : MonoBehaviour
 		numOfBoidsInFlock = 0;
 		foreach (Boid boid in boids)
 		{
-			if (ReferenceEquals(gameObject, boid.gameObject)) continue; // skip itself
+			if (this == boid) continue; // skip itself
 
 			Vector3 boidPosition = boid.transform.position;
-			float dist = Vector3.Distance(this.position, boidPosition);
+			float dist = Vector3.Distance(transform.position, boidPosition);
 
 			if (dist < settings.CohesionRange)
 			{
@@ -100,7 +99,7 @@ public class Boid : MonoBehaviour
 		if (numOfBoidsInFlock > 0)
 		{
 			positionToMoveTowards /= (float)numOfBoidsInFlock;
-			Vector3 cohesionDirection = positionToMoveTowards - position;
+			Vector3 cohesionDirection = positionToMoveTowards - transform.position;
 			cohesionDirection.Normalize();
 			cohesionVelocity = cohesionDirection * settings.CohesionFactor;
 		}
@@ -113,10 +112,10 @@ public class Boid : MonoBehaviour
 		numOfBoidsAlignedWith = 0;
 		foreach (Boid boid in boids)
 		{
-			if (ReferenceEquals(gameObject, boid.gameObject)) continue; // skip itself
-			
+			if (this == boid) continue; // skip itself
+
 			Vector3 boidPosition = boid.transform.position;
-			float dist = Vector3.Distance(this.position, boidPosition);
+			float dist = Vector3.Distance(transform.position, boidPosition);
 			if (dist < settings.AlignmentRange)
 			{	
 				alignmentVelocity += boid.Velocity;
@@ -137,13 +136,13 @@ public class Boid : MonoBehaviour
 		numOfBoidsToAvoid = 0;
 		foreach (Boid boid in boids)
 		{
-			if (ReferenceEquals(gameObject, boid.gameObject)) continue; // skip itself
-			
+			if (this == boid) continue; // skip itself
+
 			Vector3 boidPosition = boid.transform.position;
-			float dist = Vector3.Distance(this.position, boidPosition);
+			float dist = Vector3.Distance(transform.position, boidPosition);
 			if (dist < settings.SeparationRange)
 			{
-				Vector3 distanceVector = this.position - boidPosition;
+				Vector3 distanceVector = transform.position - boidPosition;
 				Vector3 travelDirection = distanceVector.normalized;
 				Vector3 weightedVelocity = travelDirection / dist;
 				seperationVelocity += weightedVelocity;
