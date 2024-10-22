@@ -4,6 +4,7 @@ using System.Linq;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Transforms;
 using Unity.VisualScripting;
@@ -20,20 +21,20 @@ namespace ECSBoids
         private void OnCreate(ref SystemState state)
         {
             state.RequireForUpdate<Boid>();
-
-            boids = new NativeList<RefRO<Boid>>(Allocator.Persistent);
-            boidTransforms = new NativeList<RefRO<LocalTransform>>(Allocator.Persistent);
-            foreach (var (boid, localTransform) in SystemAPI.Query<RefRO<Boid>, RefRO<LocalTransform>>())
-            {
-                boids.Add(boid);
-                boidTransforms.Add(localTransform);
-            }
         }
 
 
         [BurstCompile]
         private void OnUpdate(ref SystemState state)
         {
+            boids = new NativeList<RefRO<Boid>>(Allocator.TempJob);
+            boidTransforms = new NativeList<RefRO<LocalTransform>>(Allocator.TempJob);
+            foreach (var (boid, localTransform) in SystemAPI.Query<RefRO<Boid>, RefRO<LocalTransform>>())
+            {
+                boids.Add(boid);
+                boidTransforms.Add(localTransform);
+            }
+
             BoidJob boidJob = new BoidJob
             {
                 deltaTime = SystemAPI.Time.DeltaTime,
@@ -42,13 +43,6 @@ namespace ECSBoids
             };
 
             boidJob.ScheduleParallel();
-
-        }
-
-        private void OnDestroy(ref SystemState state)
-        {
-            boids.Dispose();
-            boidTransforms.Dispose();
         }
     }
 
@@ -72,7 +66,6 @@ namespace ECSBoids
             float numOfBoidsAlignedWith = 0;
             float numOfBoidsInFlock = 0;
 
-            //foreach (RefRO<Boid> otherBoid in boids)
             for (int i = 0; i < boids.Length; i++)
             {
                 RefRO<Boid> otherBoid = boids[i];
@@ -81,6 +74,7 @@ namespace ECSBoids
                 if (currentBoid.Equals(otherBoid.ValueRO)) continue; // skip itself
 
                 float dist = math.distance(localTransform.Position, otherBoidPosition);
+                Debug.Log(dist + "HEJ");
 
                 // Separation
                 if (dist < currentBoid.SeparationRange)
@@ -124,8 +118,8 @@ namespace ECSBoids
             if (numOfBoidsInFlock > 0)
             {
                 positionToMoveTowards /= (float)numOfBoidsInFlock;
-                Vector3 cohesionDirection = positionToMoveTowards - localTransform.Position;
-                cohesionDirection.Normalize();
+                float3 cohesionDirection = positionToMoveTowards - localTransform.Position;
+                cohesionDirection = math.normalize(cohesionDirection);
                 cohesionVelocity = cohesionDirection * currentBoid.CohesionFactor;
             }
 
@@ -154,8 +148,6 @@ namespace ECSBoids
 
             // Apply velocity
             localTransform.Position += currentBoid.Velocity * deltaTime;
-            // EntityManager em;
-            // em.SetComponentData()
             // Update rot
             quaternion end = quaternion.LookRotation(currentBoid.Velocity, math.up());
 
