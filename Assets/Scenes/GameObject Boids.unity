@@ -271,7 +271,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   simulationBounds: {x: 20, y: 20, z: 20}
   simulationBoundsPadding: 2
-  numberOfBoidsToSpawn: 100
+  numberOfBoidsToSpawn: 1000
   spawnRadius: 10
   boidPrefab: {fileID: 2993067069777015230, guid: b35f9a99658900f458b38a0f13af1dc6,
     type: 3}

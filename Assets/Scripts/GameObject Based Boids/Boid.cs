@@ -39,7 +39,8 @@ namespace GameObjectBoids
 			seperationVelocity = Vector3.zero;
 			alignmentVelocity = Vector3.zero;
 			cohesionVelocity = Vector3.zero;
-			
+			positionToMoveTowards = Vector3.zero;
+
 			numOfBoidsToAvoid = 0;
 			numOfBoidsAlignedWith = 0;
 			numOfBoidsInFlock = 0;

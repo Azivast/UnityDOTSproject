@@ -23,13 +23,6 @@ namespace ECSBoids
     public partial struct Boid : IComponentData
     {
         public float3 Velocity;
-        public float3 seperationVelocity;
-        public float3 alignmentVelocity;
-        public float3 cohesionVelocity;
-        public float3 positionToMoveTowards;
-        public int numOfBoidsToAvoid;
-        public int numOfBoidsAlignedWith;
-        public int numOfBoidsInFlock;
 
         public float3 SimulationBounds;
         public float SimulationBoundsPadding;

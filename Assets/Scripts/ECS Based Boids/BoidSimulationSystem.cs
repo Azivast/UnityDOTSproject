@@ -36,7 +36,7 @@ namespace ECSBoids
                 }
 
                 EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.Temp);
-
+                Random random = new Random(123);
 
                 for (int i = 0; i < simulation.ValueRO.NumberOfBoidsToSpawn; i++)
                 {
@@ -44,7 +44,8 @@ namespace ECSBoids
 
                     ecb.AddComponent(newBoid, new Boid
                     {
-                        Velocity = Random.CreateFromIndex((uint)(SystemAPI.Time.ElapsedTime / SystemAPI.Time.DeltaTime)).NextFloat3(), // TODO: This generate the same value for all boids
+                        //Velocity = Random.CreateFromIndex((uint)(SystemAPI.Time.ElapsedTime / SystemAPI.Time.DeltaTime)).NextFloat3(), // TODO: This generate the same value for all boids
+                        Velocity = random.NextFloat3(),
                         SimulationBounds = simulation.ValueRO.SimulationBounds,
                         SimulationBoundsPadding = simulation.ValueRO.SimulationBoundsPadding,
                         MaxSpeed = simulation.ValueRO.MaxSpeed,
