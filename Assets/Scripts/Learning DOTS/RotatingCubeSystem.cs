@@ -26,6 +26,7 @@ public partial struct RotatingCubeSystem : ISystem
 		// 	localTransform.ValueRW = localTransform.ValueRO.RotateY(rotateSpeed.ValueRO.speed * SystemAPI.Time.DeltaTime);
 		// }
 
+		// Using jobs system:
 		RotatingCubeJob rotatingCubeJob = new RotatingCubeJob
 		{
 			deltaTime = SystemAPI.Time.DeltaTime

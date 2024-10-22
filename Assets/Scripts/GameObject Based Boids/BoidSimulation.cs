@@ -4,55 +4,59 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Scripting;
 
-public class BoidSimulation : MonoBehaviour
+namespace GameObjectBoids
 {
-	[Header("Simulation")]
-	[SerializeField] private Vector3 simulationBounds;
-	[SerializeField] private uint numberOfBoidsToSpawn = 0;
-	[SerializeField] private float spawnRadius = 10;
-	[SerializeField] private GameObject boidPrefab;
-
-	[Header("Boids Settings")]
-	[SerializeField] private BoidSettings boidSettings = new BoidSettings();
-
-	[SerializeField] private List<Boid> boids;
-	
-	
-	private void Start()
+	public class BoidSimulation : MonoBehaviour
 	{
-		UnityEngine.Random.InitState(123);
-		boids = new List<Boid>();
-		SpawnBoids();
-	}
-	
-	private void Update()
-	{
-		foreach(Boid boid in boids)
+		[Header("Simulation")]
+		[SerializeField] private Vector3 simulationBounds;
+		[SerializeField] private float simulationBoundsPadding = 1;
+		[SerializeField] private uint numberOfBoidsToSpawn = 0;
+		[SerializeField] private float spawnRadius = 10;
+		[SerializeField] private GameObject boidPrefab;
+
+		[Header("Boids Settings")]
+		[SerializeField] private BoidSettings boidSettings = new BoidSettings();
+
+		[SerializeField] private List<Boid> boids;
+		
+		
+		private void Start()
 		{
-			boid.UpdateBoid(boids, Time.deltaTime);
+			UnityEngine.Random.InitState(123);
+			boids = new List<Boid>();
+			SpawnBoids();
 		}
-	}
-	
-	private void SpawnBoids()
-	{
-		for(int i = 0; i < numberOfBoidsToSpawn; i++)
+		
+		private void Update()
 		{
-			Boid boid = Instantiate(boidPrefab,
-			transform.position + (Random.insideUnitSphere * spawnRadius),
-			Random.rotation).GetComponent<Boid>();
-
-			boid.Constructor(boidSettings, simulationBounds);
-
-			boids.Add(boid);
+			foreach(Boid boid in boids)
+			{
+				boid.UpdateBoid(boids, Time.deltaTime);
+			}
 		}
-	}
-	
-	private void OnDrawGizmos()
-	{
-		Gizmos.color = Color.cyan;
-		Gizmos.DrawWireSphere(transform.position, spawnRadius);
+		
+		private void SpawnBoids()
+		{
+			for(int i = 0; i < numberOfBoidsToSpawn; i++)
+			{
+				Boid boid = Instantiate(boidPrefab,
+				transform.position + (Random.insideUnitSphere * spawnRadius),
+				Random.rotation).GetComponent<Boid>();
 
-		Gizmos.color = Color.yellow;
-		Gizmos.DrawWireCube(transform.position, simulationBounds*2);
+				boid.Constructor(boidSettings, simulationBounds, simulationBoundsPadding);
+
+				boids.Add(boid);
+			}
+		}
+		
+		private void OnDrawGizmos()
+		{
+			Gizmos.color = Color.cyan;
+			Gizmos.DrawWireSphere(transform.position, spawnRadius);
+
+			Gizmos.color = Color.yellow;
+			Gizmos.DrawWireCube(transform.position, simulationBounds*2);
+		}
 	}
 }
