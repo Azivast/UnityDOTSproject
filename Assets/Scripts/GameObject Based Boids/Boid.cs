@@ -58,7 +58,7 @@ namespace GameObjectBoids
 				{
 					Vector3 distanceVector = transform.position - boidPosition;
 					Vector3 travelDirection = distanceVector.normalized;
-					Vector3 weightedVelocity = travelDirection / dist;
+					Vector3 weightedVelocity = dist <= 0.001f ? Vector3.zero : travelDirection / dist; // Making sure not to divide by zero
 					seperationVelocity += weightedVelocity;
 					numOfBoidsToAvoid++;
 				}

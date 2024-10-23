@@ -51,6 +51,7 @@ namespace ECSBoids
             //  Update Boid position based on the data
             var updateBoidJob = new BoidUpdateJob
             {
+                DeltaTime = SystemAPI.Time.DeltaTime,
                 boidPositions = boidPositions,
                 boidVelocities = boidVelocities
             };
@@ -58,8 +59,8 @@ namespace ECSBoids
             state.Dependency = updateBoidJobHandle;
             updateBoidJobHandle.Complete();
 
-            boidPositions.Dispose();
-            boidVelocities.Dispose();
+            // boidPositions.Dispose();
+            // boidVelocities.Dispose();
         }
     }
 
@@ -79,8 +80,7 @@ namespace ECSBoids
     [WithAll(typeof(Boid))]
     public partial struct BoidUpdateJob : IJobEntity
     {
-        [ReadOnly] public float deltaTime;
-
+        [ReadOnly] public float DeltaTime;
         [ReadOnly] public NativeArray<float3> boidPositions;
         [ReadOnly] public NativeArray<float3> boidVelocities;
 
@@ -91,7 +91,8 @@ namespace ECSBoids
             float3 alignmentVelocity = float3.zero;
             float3 cohesionVelocity = float3.zero;
             float3 positionToMoveTowards = float3.zero;
-            float3 velocityVector = float3.zero;
+            //float3 velocityVector = float3.zero;
+            float3 velocityVector = boidVelocities[boidIndexInQuery];
 
             float numOfBoidsToAvoid = 0;
             float numOfBoidsAlignedWith = 0;
@@ -106,9 +107,10 @@ namespace ECSBoids
                 // Separation
                 if (dist < boid.SeparationRange)
                 {
+                    
                     float3 distanceVector = boidPositions[boidIndexInQuery] - boidPositions[otherBoidIndex];
-                    float3 travelDirection = math.normalize(distanceVector);
-                    float3 weightedVelocity = travelDirection / dist;
+                    float3 travelDirection = math.normalizesafe(distanceVector);
+                    float3 weightedVelocity = dist <= 0.001f ? float3.zero : travelDirection / dist; // Making sure not to divide by zero
                     separationVelocity += weightedVelocity;
                     numOfBoidsToAvoid++;
                 }
@@ -125,11 +127,6 @@ namespace ECSBoids
                 {
                     positionToMoveTowards += boidPositions[otherBoidIndex];
                     numOfBoidsInFlock++;
-                }
-
-                if (boidVelocities[otherBoidIndex].IsUnityNull())
-                {
-                    Debug.Log("OH NAJ");
                 }
             }
 
@@ -151,7 +148,7 @@ namespace ECSBoids
             {
                 positionToMoveTowards /= (float)numOfBoidsInFlock;
                 float3 cohesionDirection = positionToMoveTowards - boidPositions[boidIndexInQuery];
-                cohesionDirection = math.normalize(cohesionDirection);
+                cohesionDirection = math.normalizesafe(cohesionDirection);
                 cohesionVelocity = cohesionDirection * boid.CohesionFactor;
             }
 
@@ -161,7 +158,7 @@ namespace ECSBoids
             velocityVector += cohesionVelocity;
 
             // Clamp speed
-            velocityVector = math.normalize(velocityVector) * boid.MaxSpeed;
+            velocityVector = math.normalizesafe(velocityVector) * boid.MaxSpeed;
 
             // Update pos
             // Clamp position within simulation bounds
@@ -178,10 +175,11 @@ namespace ECSBoids
             else if (newPos.z > boid.SimulationBounds.z) newPos.z = -boid.SimulationBounds.z + boid.SimulationBoundsPadding;
 
 
+
             localToWorld = new LocalToWorld
             {
                 Value = float4x4.TRS(
-                new float3(newPos + (velocityVector * deltaTime)),
+                new float3(newPos + (velocityVector * DeltaTime)),
                 quaternion.LookRotationSafe(velocityVector, math.up()),
                 new float3(1.0f, 1.0f, 1.0f))
             };

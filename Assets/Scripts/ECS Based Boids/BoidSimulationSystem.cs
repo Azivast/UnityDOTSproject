@@ -45,7 +45,6 @@ namespace ECSBoids
 
                     ecb.AddComponent(newBoid, new Boid
                     {
-                        //Velocity = Random.CreateFromIndex((uint)(SystemAPI.Time.ElapsedTime / SystemAPI.Time.DeltaTime)).NextFloat3(), // TODO: This generate the same value for all boids
                         Velocity = random.NextFloat3(),
                         SimulationBounds = simulation.ValueRO.SimulationBounds,
                         SimulationBoundsPadding = simulation.ValueRO.SimulationBoundsPadding,
@@ -57,14 +56,8 @@ namespace ECSBoids
                         CohesionRange = simulation.ValueRO.CohesionRange,
                         CohesionFactor = simulation.ValueRO.CohesionFactor,
                     });
-                    
-                    ecb.AddComponent(newBoid, new LocalToWorld
-                    {
-                        Value = float4x4.TRS(
-                        new float3(random.NextFloat3Direction() * simulation.ValueRO.SpawnRadius),
-                        quaternion.identity,
-                        new float3(1.0f, 1.0f, 1.0f))
-                    });
+
+                    ecb.SetComponent(newBoid, LocalTransform.FromPosition(new float3(random.NextFloat3Direction() * simulation.ValueRO.SpawnRadius)));
 
                     simulation.ValueRW.NumberOfBoidsSpawned++;
                 }
