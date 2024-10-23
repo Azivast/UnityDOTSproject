@@ -6,6 +6,7 @@ using Unity.Collections;
 using UnityEngine;
 using Unity.Mathematics;
 using Random = Unity.Mathematics.Random;
+using Unity.Transforms;
 
 
 namespace ECSBoids
@@ -27,6 +28,7 @@ namespace ECSBoids
             if (query.CalculateEntityCount() > 0)
             {
                 Entity simulationEntity = query.GetSingletonEntity();
+                Random random = new Random(123);
 
                 RefRW<BoidSimulation> simulation = SystemAPI.GetComponentRW<BoidSimulation>(simulationEntity);
 
@@ -36,7 +38,6 @@ namespace ECSBoids
                 }
 
                 EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.Temp);
-                Random random = new Random(123);
 
                 for (int i = 0; i < simulation.ValueRO.NumberOfBoidsToSpawn; i++)
                 {
@@ -55,6 +56,14 @@ namespace ECSBoids
                         AlignmentFactor = simulation.ValueRO.AlignmentFactor,
                         CohesionRange = simulation.ValueRO.CohesionRange,
                         CohesionFactor = simulation.ValueRO.CohesionFactor,
+                    });
+                    
+                    ecb.AddComponent(newBoid, new LocalToWorld
+                    {
+                        Value = float4x4.TRS(
+                        new float3(random.NextFloat3Direction() * simulation.ValueRO.SpawnRadius),
+                        quaternion.identity,
+                        new float3(1.0f, 1.0f, 1.0f))
                     });
 
                     simulation.ValueRW.NumberOfBoidsSpawned++;

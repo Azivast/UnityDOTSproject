@@ -4,6 +4,7 @@ using System.Linq;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Entities.UniversalDelegates;
 using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Transforms;
@@ -15,89 +16,120 @@ namespace ECSBoids
 
     public partial struct BoidSystem : ISystem
     {
-        NativeList<RefRO<Boid>> boids;
-        NativeList<RefRO<LocalTransform>> boidTransforms;
 
         private void OnCreate(ref SystemState state)
         {
             state.RequireForUpdate<Boid>();
         }
 
+        public void OnDestroy(ref SystemState state)
+        {
+            // Cleanup code if needed
+        }
 
         [BurstCompile]
         private void OnUpdate(ref SystemState state)
         {
-            boids = new NativeList<RefRO<Boid>>(Allocator.TempJob);
-            boidTransforms = new NativeList<RefRO<LocalTransform>>(Allocator.TempJob);
-            foreach (var (boid, localTransform) in SystemAPI.Query<RefRO<Boid>, RefRO<LocalTransform>>())
-            {
-                boids.Add(boid);
-                boidTransforms.Add(localTransform);
-            }
+            var world = state.WorldUnmanaged;
+            var boidQuery = SystemAPI.QueryBuilder().WithAll<Boid>().WithAllRW<LocalToWorld>().Build();
+            int boidCount = boidQuery.CalculateEntityCount();
 
-            BoidJob boidJob = new BoidJob
+
+            var boidPositions = CollectionHelper.CreateNativeArray<float3, RewindableAllocator>(boidCount, ref world.UpdateAllocator);
+            var boidVelocities = CollectionHelper.CreateNativeArray<float3, RewindableAllocator>(boidCount, ref world.UpdateAllocator);
+
+            //  Get positions and velocity of all boids.
+            var getDataJob = new BoidsGetDataJob
             {
-                deltaTime = SystemAPI.Time.DeltaTime,
-                boids = boids.AsArray(),
-                boidTransforms = boidTransforms.AsArray()
+                Positions = boidPositions,
+                Velocities = boidVelocities
             };
+            JobHandle getDataJobHandle = getDataJob.ScheduleParallel(boidQuery, state.Dependency);
+            state.Dependency = getDataJobHandle;
+            getDataJobHandle.Complete();
 
-            boidJob.ScheduleParallel();
+            //  Update Boid position based on the data
+            var updateBoidJob = new BoidUpdateJob
+            {
+                boidPositions = boidPositions,
+                boidVelocities = boidVelocities
+            };
+            JobHandle updateBoidJobHandle = updateBoidJob.ScheduleParallel(boidQuery, state.Dependency);
+            state.Dependency = updateBoidJobHandle;
+            updateBoidJobHandle.Complete();
+
+            boidPositions.Dispose();
+            boidVelocities.Dispose();
+        }
+    }
+
+    [BurstCompile]
+    public partial struct BoidsGetDataJob : IJobEntity
+    {
+        public NativeArray<float3> Positions;
+        public NativeArray<float3> Velocities;
+        void Execute([EntityIndexInQuery] int entityIndexInQuery, in LocalToWorld localToWorld, in Boid boid)
+        {
+            Positions[entityIndexInQuery] = localToWorld.Position;
+            Velocities[entityIndexInQuery] = boid.Velocity;
         }
     }
 
     [BurstCompile]
     [WithAll(typeof(Boid))]
-    public partial struct BoidJob : IJobEntity
+    public partial struct BoidUpdateJob : IJobEntity
     {
         [ReadOnly] public float deltaTime;
-        [ReadOnly] public NativeArray<RefRO<Boid>> boids;
-        [ReadOnly] public NativeArray<RefRO<LocalTransform>> boidTransforms;
+
+        [ReadOnly] public NativeArray<float3> boidPositions;
+        [ReadOnly] public NativeArray<float3> boidVelocities;
 
         [BurstCompile]
-        public void Execute(ref Boid currentBoid, ref LocalTransform localTransform)
+        public void Execute([EntityIndexInQuery] int boidIndexInQuery, ref LocalToWorld localToWorld, ref Boid boid)
         {
-            float3 seperationVelocity = float3.zero;
+            float3 separationVelocity = float3.zero;
             float3 alignmentVelocity = float3.zero;
             float3 cohesionVelocity = float3.zero;
             float3 positionToMoveTowards = float3.zero;
+            float3 velocityVector = float3.zero;
 
             float numOfBoidsToAvoid = 0;
             float numOfBoidsAlignedWith = 0;
             float numOfBoidsInFlock = 0;
 
-            for (int i = 0; i < boids.Length; i++)
+            for (int otherBoidIndex = 0; otherBoidIndex < boidPositions.Length; otherBoidIndex++)
             {
-                RefRO<Boid> otherBoid = boids[i];
-                float3 otherBoidPosition = boidTransforms[i].ValueRO.Position;
+                if (boidIndexInQuery == otherBoidIndex) continue; // skip itself
 
-                if (currentBoid.Equals(otherBoid.ValueRO)) continue; // skip itself
-
-                float dist = math.distance(localTransform.Position, otherBoidPosition);
-                Debug.Log(dist + "HEJ");
+                float dist = math.distance(boidPositions[boidIndexInQuery], boidPositions[otherBoidIndex]);
 
                 // Separation
-                if (dist < currentBoid.SeparationRange)
+                if (dist < boid.SeparationRange)
                 {
-                    float3 distanceVector = localTransform.Position - otherBoidPosition;
+                    float3 distanceVector = boidPositions[boidIndexInQuery] - boidPositions[otherBoidIndex];
                     float3 travelDirection = math.normalize(distanceVector);
                     float3 weightedVelocity = travelDirection / dist;
-                    seperationVelocity += weightedVelocity;
+                    separationVelocity += weightedVelocity;
                     numOfBoidsToAvoid++;
                 }
 
                 // Alignment
-                if (dist < currentBoid.AlignmentRange)
+                if (dist < boid.AlignmentRange)
                 {
-                    alignmentVelocity += otherBoid.ValueRO.Velocity;
+                    alignmentVelocity += boidVelocities[otherBoidIndex];
                     numOfBoidsAlignedWith++;
                 }
 
                 // Cohesion
-                if (dist < currentBoid.CohesionRange)
+                if (dist < boid.CohesionRange)
                 {
-                    positionToMoveTowards += otherBoidPosition;
+                    positionToMoveTowards += boidPositions[otherBoidIndex];
                     numOfBoidsInFlock++;
+                }
+
+                if (boidVelocities[otherBoidIndex].IsUnityNull())
+                {
+                    Debug.Log("OH NAJ");
                 }
             }
 
@@ -105,54 +137,56 @@ namespace ECSBoids
             // Calc Separation
             if (numOfBoidsToAvoid > 0)
             {
-                seperationVelocity /= (float)numOfBoidsToAvoid;
-                seperationVelocity *= currentBoid.SeparationFactor;
+                separationVelocity /= (float)numOfBoidsToAvoid;
+                separationVelocity *= boid.SeparationFactor;
             }
             // Calc Alignment
             if (numOfBoidsAlignedWith > 0)
             {
                 alignmentVelocity /= (float)numOfBoidsAlignedWith;
-                alignmentVelocity *= currentBoid.AlignmentFactor;
+                alignmentVelocity *= boid.AlignmentFactor;
             }
             // Calc Cohesion
             if (numOfBoidsInFlock > 0)
             {
                 positionToMoveTowards /= (float)numOfBoidsInFlock;
-                float3 cohesionDirection = positionToMoveTowards - localTransform.Position;
+                float3 cohesionDirection = positionToMoveTowards - boidPositions[boidIndexInQuery];
                 cohesionDirection = math.normalize(cohesionDirection);
-                cohesionVelocity = cohesionDirection * currentBoid.CohesionFactor;
+                cohesionVelocity = cohesionDirection * boid.CohesionFactor;
             }
 
             // Apply
-            currentBoid.Velocity += seperationVelocity;
-            currentBoid.Velocity += alignmentVelocity;
-            currentBoid.Velocity += cohesionVelocity;
+            velocityVector += separationVelocity;
+            velocityVector += alignmentVelocity;
+            velocityVector += cohesionVelocity;
 
             // Clamp speed
-            currentBoid.Velocity = math.normalize(currentBoid.Velocity) * currentBoid.MaxSpeed;
+            velocityVector = math.normalize(velocityVector) * boid.MaxSpeed;
+
             // Update pos
             // Clamp position within simulation bounds
             // TODO: make this prettier
-            var pos = localTransform.Position;
+            var newPos = boidPositions[boidIndexInQuery];
 
-            if (pos.x < -currentBoid.SimulationBounds.x) pos.x = currentBoid.SimulationBounds.x - currentBoid.SimulationBoundsPadding;
-            else if (pos.x > currentBoid.SimulationBounds.x) pos.x = -currentBoid.SimulationBounds.x + currentBoid.SimulationBoundsPadding;
+            if (newPos.x < -boid.SimulationBounds.x) newPos.x = boid.SimulationBounds.x - boid.SimulationBoundsPadding;
+            else if (newPos.x > boid.SimulationBounds.x) newPos.x = -boid.SimulationBounds.x + boid.SimulationBoundsPadding;
 
-            if (pos.y < -currentBoid.SimulationBounds.y) pos.y = currentBoid.SimulationBounds.y - currentBoid.SimulationBoundsPadding;
-            else if (pos.y > currentBoid.SimulationBounds.y) pos.y = -currentBoid.SimulationBounds.y + currentBoid.SimulationBoundsPadding;
+            if (newPos.y < -boid.SimulationBounds.y) newPos.y = boid.SimulationBounds.y - boid.SimulationBoundsPadding;
+            else if (newPos.y > boid.SimulationBounds.y) newPos.y = -boid.SimulationBounds.y + boid.SimulationBoundsPadding;
 
-            if (pos.z < -currentBoid.SimulationBounds.z) pos.z = currentBoid.SimulationBounds.z - currentBoid.SimulationBoundsPadding;
-            else if (pos.z > currentBoid.SimulationBounds.z) pos.z = -currentBoid.SimulationBounds.z + currentBoid.SimulationBoundsPadding;
+            if (newPos.z < -boid.SimulationBounds.z) newPos.z = boid.SimulationBounds.z - boid.SimulationBoundsPadding;
+            else if (newPos.z > boid.SimulationBounds.z) newPos.z = -boid.SimulationBounds.z + boid.SimulationBoundsPadding;
 
-            localTransform.Position = pos;
 
-            // Apply velocity
-            localTransform.Position += currentBoid.Velocity * deltaTime;
-            // Update rot
-            quaternion end = quaternion.LookRotation(currentBoid.Velocity, math.up());
+            localToWorld = new LocalToWorld
+            {
+                Value = float4x4.TRS(
+                new float3(newPos + (velocityVector * deltaTime)),
+                quaternion.LookRotationSafe(velocityVector, math.up()),
+                new float3(1.0f, 1.0f, 1.0f))
+            };
 
-            //quaternion result=quaternion.sl
-            localTransform.Rotation = end;
+            boid.Velocity = velocityVector;
         }
     }
 }

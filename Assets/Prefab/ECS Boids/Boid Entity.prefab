@@ -16,17 +16,17 @@ PrefabInstance:
     - target: {fileID: 3194833288954287871, guid: b35f9a99658900f458b38a0f13af1dc6,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: 1.7608128
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3194833288954287871, guid: b35f9a99658900f458b38a0f13af1dc6,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: 2.8911333
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3194833288954287871, guid: b35f9a99658900f458b38a0f13af1dc6,
         type: 3}
       propertyPath: m_LocalPosition.z
-      value: -11.306406
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3194833288954287871, guid: b35f9a99658900f458b38a0f13af1dc6,
         type: 3}
@@ -91,13 +91,3 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58bbfc53afb2a23499f7f67ec4261fea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  SimulationBounds: {x: 0, y: 0, z: 0}
-  SimulationBoundsPadding: 0
-  BoidSettings:
-    MaxSpeed: 10
-    SeparationRange: 10
-    SeparationFactor: 1
-    AlignmentRange: 10
-    AlignmentFactor: 1
-    CohesionRange: 10
-    CohesionFactor: 1
