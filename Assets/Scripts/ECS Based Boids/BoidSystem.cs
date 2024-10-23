@@ -59,8 +59,8 @@ namespace ECSBoids
             state.Dependency = updateBoidJobHandle;
             updateBoidJobHandle.Complete();
 
-            // boidPositions.Dispose();
-            // boidVelocities.Dispose();
+            boidPositions.Dispose();
+            boidVelocities.Dispose();
         }
     }
 

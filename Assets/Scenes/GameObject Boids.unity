@@ -269,7 +269,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 916f2d81d1e5a7c42a886347dbcf68be, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  simulationBounds: {x: 20, y: 20, z: 20}
+  simulationBounds: {x: 40, y: 40, z: 40}
   simulationBoundsPadding: 2
   numberOfBoidsToSpawn: 100
   spawnRadius: 10
