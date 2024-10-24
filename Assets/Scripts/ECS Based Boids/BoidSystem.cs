@@ -91,7 +91,6 @@ namespace ECSBoids
             float3 alignmentVelocity = float3.zero;
             float3 cohesionVelocity = float3.zero;
             float3 positionToMoveTowards = float3.zero;
-            //float3 velocityVector = float3.zero;
             float3 velocityVector = boidVelocities[boidIndexInQuery];
 
             float numOfBoidsToAvoid = 0;
@@ -148,7 +147,7 @@ namespace ECSBoids
             {
                 positionToMoveTowards /= (float)numOfBoidsInFlock;
                 float3 cohesionDirection = positionToMoveTowards - boidPositions[boidIndexInQuery];
-                cohesionDirection = math.normalizesafe(cohesionDirection);
+                //cohesionDirection = math.normalizesafe(cohesionDirection);
                 cohesionVelocity = cohesionDirection * boid.CohesionFactor;
             }
 

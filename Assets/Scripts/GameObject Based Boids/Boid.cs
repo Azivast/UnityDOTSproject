@@ -96,7 +96,7 @@ namespace GameObjectBoids
 			{
 				positionToMoveTowards /= (float)numOfBoidsInFlock;
 				Vector3 cohesionDirection = positionToMoveTowards - transform.position;
-				cohesionDirection.Normalize();
+				//cohesionDirection.Normalize();
 				cohesionVelocity = cohesionDirection * settings.CohesionFactor;
 			}
 

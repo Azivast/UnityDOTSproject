@@ -271,17 +271,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   simulationBounds: {x: 40, y: 40, z: 40}
   simulationBoundsPadding: 2
-  numberOfBoidsToSpawn: 100
+  numberOfBoidsToSpawn: 300
   spawnRadius: 10
   boidPrefab: {fileID: 2993067069777015230, guid: b35f9a99658900f458b38a0f13af1dc6,
     type: 3}
   boidSettings:
     MaxSpeed: 3
-    SeparationRange: 3
+    SeparationRange: 2
     SeparationFactor: 1
     AlignmentRange: 2
-    AlignmentFactor: 0.2
-    CohesionRange: 5
+    AlignmentFactor: 0
+    CohesionRange: 3
     CohesionFactor: 0.1
   boids: []
 --- !u!4 &590335341

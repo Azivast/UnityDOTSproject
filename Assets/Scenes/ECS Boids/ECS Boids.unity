@@ -159,11 +159,11 @@ MonoBehaviour:
     type: 3}
   boidSettings:
     MaxSpeed: 3
-    SeparationRange: 3
+    SeparationRange: 2
     SeparationFactor: 1
     AlignmentRange: 2
-    AlignmentFactor: 0.2
-    CohesionRange: 5
+    AlignmentFactor: 0.05
+    CohesionRange: 3
     CohesionFactor: 0.1
 --- !u!4 &764486600
 Transform:
