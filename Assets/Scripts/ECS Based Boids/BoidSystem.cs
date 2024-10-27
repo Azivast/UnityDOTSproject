@@ -22,18 +22,12 @@ namespace ECSBoids
             state.RequireForUpdate<Boid>();
         }
 
-        public void OnDestroy(ref SystemState state)
-        {
-            // Cleanup code if needed
-        }
-
         [BurstCompile]
         private void OnUpdate(ref SystemState state)
         {
             var world = state.WorldUnmanaged;
             var boidQuery = SystemAPI.QueryBuilder().WithAll<Boid>().WithAllRW<LocalToWorld>().Build();
             int boidCount = boidQuery.CalculateEntityCount();
-
 
             var boidPositions = CollectionHelper.CreateNativeArray<float3, RewindableAllocator>(boidCount, ref world.UpdateAllocator);
             var boidVelocities = CollectionHelper.CreateNativeArray<float3, RewindableAllocator>(boidCount, ref world.UpdateAllocator);
@@ -147,7 +141,6 @@ namespace ECSBoids
             {
                 positionToMoveTowards /= (float)numOfBoidsInFlock;
                 float3 cohesionDirection = positionToMoveTowards - boidPositions[boidIndexInQuery];
-                //cohesionDirection = math.normalizesafe(cohesionDirection);
                 cohesionVelocity = cohesionDirection * boid.CohesionFactor;
             }
 
@@ -187,4 +180,3 @@ namespace ECSBoids
         }
     }
 }
-

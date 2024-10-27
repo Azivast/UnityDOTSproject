@@ -8,13 +8,11 @@ namespace ECSBoids
 {
     public class BoidAuthoring : MonoBehaviour
     {
-
         public class Baker : Baker<BoidAuthoring>
         {
             public override void Bake(BoidAuthoring authoring)
             {
                 Entity entity = GetEntity(TransformUsageFlags.Dynamic);
-
                 AddComponent(entity, new Boid());
             }
         }
@@ -23,10 +21,8 @@ namespace ECSBoids
     public partial struct Boid : IComponentData
     {
         public float3 Velocity;
-
         public float3 SimulationBounds;
         public float SimulationBoundsPadding;
-
         public float MaxSpeed;
         public float SeparationRange;
         public float SeparationFactor;

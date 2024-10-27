@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
-using UnityEditor.Animations;
 using UnityEngine;
 
 namespace GameObjectBoids
@@ -11,7 +10,7 @@ namespace GameObjectBoids
 	{
 		[Header("These variables are updated at runtime \nand are only serialized for visualization")]
 		public Vector3 Velocity;
-		[SerializeField] private Vector3 seperationVelocity;
+		[SerializeField] private Vector3 separationVelocity;
 		[SerializeField] private Vector3 alignmentVelocity;
 		[SerializeField] private Vector3 cohesionVelocity;
 		[SerializeField] private Vector3 positionToMoveTowards;
@@ -36,7 +35,7 @@ namespace GameObjectBoids
 		
 		public void UpdateBoid(List<Boid> boids, float deltaTime)
 		{
-			seperationVelocity = Vector3.zero;
+			separationVelocity = Vector3.zero;
 			alignmentVelocity = Vector3.zero;
 			cohesionVelocity = Vector3.zero;
 			positionToMoveTowards = Vector3.zero;
@@ -59,7 +58,7 @@ namespace GameObjectBoids
 					Vector3 distanceVector = transform.position - boidPosition;
 					Vector3 travelDirection = distanceVector.normalized;
 					Vector3 weightedVelocity = dist <= 0.001f ? Vector3.zero : travelDirection / dist; // Making sure not to divide by zero
-					seperationVelocity += weightedVelocity;
+					separationVelocity += weightedVelocity;
 					numOfBoidsToAvoid++;
 				}
 
@@ -82,8 +81,8 @@ namespace GameObjectBoids
 			// Calc Separation
 			if (numOfBoidsToAvoid > 0)
 			{
-				seperationVelocity /= (float)numOfBoidsToAvoid;
-				seperationVelocity *= settings.SeparationFactor;
+				separationVelocity /= (float)numOfBoidsToAvoid;
+				separationVelocity *= settings.SeparationFactor;
 			}
 			// Calc Alignment
 			if (numOfBoidsAlignedWith > 0)
@@ -101,7 +100,7 @@ namespace GameObjectBoids
 			}
 
 			// Apply
-			Velocity += seperationVelocity;
+			Velocity += separationVelocity;
 			Velocity += alignmentVelocity;
 			Velocity += cohesionVelocity;
 			
@@ -150,7 +149,7 @@ namespace GameObjectBoids
 
 			// draw separation
 			Gizmos.color = Color.blue;
-			Gizmos.DrawLine(transform.position, transform.position+seperationVelocity);
+			Gizmos.DrawLine(transform.position, transform.position+separationVelocity);
 			Gizmos.DrawWireSphere(transform.position, settings.SeparationRange);
 			// alignment
 			Gizmos.color = Color.cyan;
@@ -160,6 +159,108 @@ namespace GameObjectBoids
 			Gizmos.color = Color.green;
 			Gizmos.DrawLine(transform.position, transform.position+cohesionVelocity);
 			Gizmos.DrawWireSphere(transform.position, settings.CohesionRange);
+		}
+
+		private void Separation(List<Boid> boids)
+		{
+			separationVelocity = Vector3.zero;
+			numOfBoidsToAvoid = 0;
+
+			foreach (Boid boid in boids)
+			{
+				if (this == boid) continue; // skip self
+
+				Vector3 boidPosition = boid.transform.position;
+				float dist = Vector3.Distance(transform.position, boidPosition);
+
+				// Add separation force for boid if in range
+				if (dist < settings.SeparationRange)
+				{
+					Vector3 distanceVector = transform.position - boidPosition;
+					Vector3 travelDirection = distanceVector.normalized;
+					// Making sure not to divide by zero
+					Vector3 weightedVelocity = dist <= 0.001f ? Vector3.zero : travelDirection / dist; 
+					separationVelocity += weightedVelocity;
+					numOfBoidsToAvoid++;
+				}
+			}
+
+			// Calc mean separation & apply weight
+			if (numOfBoidsToAvoid > 0)
+			{
+				separationVelocity /= (float)numOfBoidsToAvoid;
+				separationVelocity *= settings.SeparationFactor;
+			}
+
+			// Apply
+			Velocity += separationVelocity;
+		}
+
+		private void Alignment(List<Boid> boids)
+		{
+			alignmentVelocity = Vector3.zero;
+			numOfBoidsAlignedWith = 0;
+
+
+			foreach (Boid boid in boids)
+			{
+				if (this == boid) continue; // skip self
+
+				Vector3 boidPosition = boid.transform.position;
+				float dist = Vector3.Distance(transform.position, boidPosition);
+
+				// Add alignment force for boid if in range
+				if (dist < settings.AlignmentRange)
+				{
+					alignmentVelocity += boid.Velocity;
+					numOfBoidsAlignedWith++;
+				}
+			}
+
+			// Calc mean alignment & apply weight
+			if (numOfBoidsAlignedWith > 0)
+			{
+				alignmentVelocity /= (float)numOfBoidsAlignedWith;
+				alignmentVelocity *= settings.AlignmentFactor;
+			}
+
+			// Apply
+			Velocity += alignmentVelocity;
+		}
+
+		private void Cohesion(List<Boid> boids)
+		{
+			cohesionVelocity = Vector3.zero;
+			positionToMoveTowards = Vector3.zero;
+
+			numOfBoidsInFlock = 0;
+
+
+			foreach (Boid boid in boids)
+			{
+				if (this == boid) continue; // skip self
+
+				Vector3 boidPosition = boid.transform.position;
+				float dist = Vector3.Distance(transform.position, boidPosition);
+
+				// Add cohesion force for boid if in range
+				if (dist < settings.CohesionRange)
+				{
+					positionToMoveTowards += boidPosition;
+					numOfBoidsInFlock++;
+				}
+			}
+
+			// Calc mean cohesion & apply weight
+			if (numOfBoidsInFlock > 0)
+			{
+				positionToMoveTowards /= (float)numOfBoidsInFlock;
+				Vector3 cohesionDirection = positionToMoveTowards - transform.position;
+				cohesionVelocity = cohesionDirection * settings.CohesionFactor;
+			}
+
+			// Apply
+			Velocity += cohesionVelocity;
 		}
 	}
 }

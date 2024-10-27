@@ -21,9 +21,6 @@ namespace ECSBoids
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-
-            // TODO: The following implementation might be slow since it checks each frame.
-            // improve by only running once - OnCreate doesn't find BoidSimulation though.
             var query = SystemAPI.QueryBuilder().WithAll<BoidSimulation>().Build();
             if (query.CalculateEntityCount() > 0)
             {
