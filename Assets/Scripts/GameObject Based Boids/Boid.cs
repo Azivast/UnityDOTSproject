@@ -122,7 +122,6 @@ namespace GameObjectBoids
 		private void UpdatePosition(float deltaTime)
 		{
 			// Clamp position within simulation bounds
-			// TODO: make this prettier
 			var pos = transform.position;
 			
 			if (pos.x < -simulationBounds.x) pos.x = simulationBounds.x-simulationBoundsPadding;

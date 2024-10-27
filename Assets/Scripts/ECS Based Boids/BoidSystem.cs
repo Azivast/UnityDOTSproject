@@ -154,7 +154,6 @@ namespace ECSBoids
 
             // Update pos
             // Clamp position within simulation bounds
-            // TODO: make this prettier
             var newPos = boidPositions[boidIndexInQuery];
 
             if (newPos.x < -boid.SimulationBounds.x) newPos.x = boid.SimulationBounds.x - boid.SimulationBoundsPadding;
