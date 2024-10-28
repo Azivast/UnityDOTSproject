@@ -124,19 +124,19 @@ namespace ECSBoids
             }
 
 
-            // Calc Separation
+            // Calc Separation Velocity
             if (numOfBoidsToAvoid > 0)
             {
                 separationVelocity /= (float)numOfBoidsToAvoid;
                 separationVelocity *= boid.SeparationFactor;
             }
-            // Calc Alignment
+            // Calc Alignment Velocity
             if (numOfBoidsAlignedWith > 0)
             {
                 alignmentVelocity /= (float)numOfBoidsAlignedWith;
                 alignmentVelocity *= boid.AlignmentFactor;
             }
-            // Calc Cohesion
+            // Calc Cohesion Velocity
             if (numOfBoidsInFlock > 0)
             {
                 positionToMoveTowards /= (float)numOfBoidsInFlock;
@@ -144,7 +144,7 @@ namespace ECSBoids
                 cohesionVelocity = cohesionDirection * boid.CohesionFactor;
             }
 
-            // Apply
+            // Apply Velocities
             velocityVector += separationVelocity;
             velocityVector += alignmentVelocity;
             velocityVector += cohesionVelocity;

@@ -160,6 +160,12 @@ namespace GameObjectBoids
 			Gizmos.DrawWireSphere(transform.position, settings.CohesionRange);
 		}
 
+
+		//----------------------------------------------------------------------
+		// The below functions have been merged into a single foreach loop in
+		// UpdateBoid() above. I have only left them here to make it easier to
+		// understand the algorithms. - Olle
+		//----------------------------------------------------------------------
 		private void Separation(List<Boid> boids)
 		{
 			separationVelocity = Vector3.zero;
